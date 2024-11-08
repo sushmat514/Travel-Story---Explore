@@ -93,7 +93,7 @@ app.post("/login", async (req, res) => {
 });
 // GET user details
 app.get("/get-user", authenticateToken, async (req, res) => {
-  const { userId } = res.user;
+  const { userId } = req.user;
   const isUser = await User.findOne({ _id: userId });
   if (!isUser) {
     return res.sendStatus(401);
@@ -185,7 +185,7 @@ app.get("/all-travel-stories", authenticateToken, async (req, res) => {
     const travelStories = await TravelStory.find({ userId: userId }).sort({
       isFavourite: -1,
     });
-    res.status(400).json({ stories: travelStories });
+    res.status(200).json({ stories: travelStories });
   } catch (error) {
     res.status(500).json({ error: true, message: error.message });
   }
@@ -198,7 +198,7 @@ app.put("/edit-travel-story/:id", authenticateToken, async (req, res) => {
   const { userId } = req.user;
 
   // validate the required fields
-  if (!title || !story || !visitedLocation || !imageUrl || !visitedDate) {
+  if (!title || !story || !visitedLocation || !visitedDate) {
     return res
       .status(400)
       .json({ error: true, message: "All fields are required" });
@@ -220,7 +220,7 @@ app.put("/edit-travel-story/:id", authenticateToken, async (req, res) => {
     travelStory.title = title;
     travelStory.story = story;
     travelStory.visitedLocation = visitedLocation;
-    travelStory.imageUrl = imageUrl;
+    travelStory.imageUrl = imageUrl == "" ? imagePlaceHolder : imageUrl;
     travelStory.visitedDate = parsedVisitedDate;
 
     await travelStory.save();
@@ -276,12 +276,10 @@ app.put("/update-isFavourite/:id", authenticateToken, async (req, res) => {
 
   try {
     const travelStory = await TravelStory.findOne({ _id: id, userId: userId });
-    // console.log(travelStory);
     if (!travelStory) {
       res.status(404).json({ message: "Travel story not found" });
     }
     travelStory.isFavourite = isFavourite;
-    console.log(travelStory.isFavourite);
     await travelStory.save();
 
     res
